@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Edukasi Hewan</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f8ff; padding: 20px; text-align: center; }
+    .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
+    h1 { color: #2c3e50; }
+    .question { font-size: 1.2em; margin-bottom: 20px; }
+    .options button { margin: 5px; padding: 10px 20px; font-size: 1em; border: none; border-radius: 8px; background-color: #3498db; color: white; cursor: pointer; }
+    .options button:hover { background-color: #2980b9; }
+    #result { font-size: 1.2em; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Kenali Hewan di Sekitarmu!</h1>
+    <div class="question" id="question">Memuat soal...</div>
+    <div class="options" id="options"></div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Hewan apakah yang termasuk invertebrata?",
+        options: ["Kucing", "Siput", "Ayam", "Katak"],
+        answer: "Siput"
+      },
+      {
+        question: "Hewan yang hidup di laut dan berkulit duri disebut...",
+        options: ["Ular", "Bintang laut", "Kura-kura", "Laba-laba"],
+        answer: "Bintang laut"
+      },
+      {
+        question: "Contoh hewan dengan kaki beruas adalah...",
+        options: ["Kerang", "Cumi-cumi", "Udang", "Ikan"],
+        answer: "Udang"
+      },
+      {
+        question: "Katak termasuk hewan...",
+        options: ["Amfibi", "Reptil", "Pisces", "Aves"],
+        answer: "Amfibi"
+      },
+      {
+        question: "Ciri khas burung adalah memiliki...",
+        options: ["Sisik", "Bulu dan paruh", "Cangkang", "Kulit duri"],
+        answer: "Bulu dan paruh"
+      }
+    ];
+
+    let currentQuestion = 0;
+
+    function loadQuestion() {
+      const q = questions[currentQuestion];
+      document.getElementById("question").textContent = q.question;
+      const optionsDiv = document.getElementById("options");
+      optionsDiv.innerHTML = "";
+      q.options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(opt);
+        optionsDiv.appendChild(btn);
+      });
+      document.getElementById("result").textContent = "";
+    }
+
+    function checkAnswer(selected) {
+      const correct = questions[currentQuestion].answer;
+      const result = document.getElementById("result");
+      if (selected === correct) {
+        result.textContent = "Benar! 🎉";
+        result.style.color = "green";
+      } else {
+        result.textContent = `Salah. Jawaban yang benar: ${correct}`;
+        result.style.color = "red";
+      }
+
+      setTimeout(() => {
+        currentQuestion = (currentQuestion + 1) % questions.length;
+        loadQuestion();
+      }, 2000);
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
