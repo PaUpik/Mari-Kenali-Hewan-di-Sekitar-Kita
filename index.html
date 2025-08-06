@@ -1,244 +1,208 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Edukasi Hewan</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f0f8ff; padding: 20px; text-align: center; }
-    .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 700px; margin: auto; }
-    h1 { color: #2c3e50; }
-    .question { font-size: 1.2em; margin-bottom: 10px; }
-    .options button { margin: 5px; padding: 10px 20px; font-size: 1em; border: none; border-radius: 8px; background-color: #3498db; color: white; cursor: pointer; }
-    .options button:hover { background-color: #2980b9; }
-    #result { font-size: 1.2em; margin-top: 10px; }
-    #animalImage { max-width: 300px; margin: 10px auto; display: block; border-radius: 10px; }
-    #nextBtn, #restartBtn { margin-top: 20px; padding: 10px 20px; font-size: 1em; border-radius: 8px; background-color: #2ecc71; color: white; border: none; cursor: pointer; }
-    #nextBtn:hover, #restartBtn:hover { background-color: #27ae60; }
-    #timer { font-size: 1.2em; color: #e67e22; margin-top: 10px; }
-    #highscore { font-size: 0.9em; color: gray; margin-top: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f8ff;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin: auto;
+      padding: 20px;
+    }
+    img, video {
+      max-width: 100%;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      background-color: #3498db;
+      color: white;
+    }
+    .options button:hover {
+      background-color: #2980b9;
+    }
+    #musicToggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #2ecc71;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      .card { padding: 10px; }
+      .options button { font-size: 0.9rem; padding: 8px; }
+      #musicToggle { padding: 8px; font-size: 0.9rem; }
+    }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>Kenali Hewan di Sekitarmu!</h1>
-    <img id="animalImage" src="" alt="Gambar hewan" />
-    <div class="question" id="question">Memuat soal...</div>
-    <div class="options" id="options" role="group"></div>
-    <div id="result"></div>
-    <div id="timer"></div>
-    <div id="highscore"></div>
-    <button id="nextBtn" onclick="nextQuestion()" style="display:none;">Lanjut</button>
-    <button id="restartBtn" onclick="restartGame()" style="display:none;">Main Lagi</button>
-  </main>
+  <button id="musicToggle">🔊 Musik</button>
+  <audio id="bgMusic" loop>
+    <source src="https://cdn.pixabay.com/audio/2022/03/14/audio_6f0eb97f45.mp3" type="audio/mpeg">
+  </audio>
 
-  <audio id="audioCorrect" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_2cba24c702.mp3" preload="auto"></audio>
-  <audio id="audioWrong" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_f68d6d6b0f.mp3" preload="auto"></audio>
+  <div class="card">
+    <h1>Game Edukasi Hewan</h1>
+    <div id="questionContainer">
+      <div id="questionText"></div>
+      <div id="mediaContainer"></div>
+      <div class="options" id="options"></div>
+      <div id="timer"></div>
+    </div>
+    <div id="result"></div>
+    <button id="nextBtn">Soal Berikutnya</button>
+    <div id="score"></div>
+    <h3>🏆 Leaderboard</h3>
+    <ul id="leaderboard"></ul>
+  </div>
 
   <script>
-    const allQuestions = {
-      easy: [
-        {
-          question: "Katak termasuk hewan...",
-          options: ["Amfibi", "Reptil", "Pisces", "Aves"],
-          answer: "Amfibi",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/African_Bullfrog_-_Pyxicephalus_adspersus_01.jpg/640px-African_Bullfrog_-_Pyxicephalus_adspersus_01.jpg"
-        },
-        {
-          question: "Ciri khas burung adalah memiliki...",
-          options: ["Sisik", "Bulu dan paruh", "Cangkang", "Kulit duri"],
-          answer: "Bulu dan paruh",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Bird_on_tree.jpg/640px-Bird_on_tree.jpg"
-        },
-        {
-          question: "Hewan manakah yang termasuk vertebrata?",
-          options: ["Siput", "Bintang laut", "Kucing", "Cacing"],
-          answer: "Kucing",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Cat_poster_1.jpg/640px-Cat_poster_1.jpg"
-        }
-      ],
-      medium: [
-        {
-          question: "Contoh hewan dengan kaki beruas adalah...",
-          options: ["Kerang", "Cumi-cumi", "Udang", "Ikan"],
-          answer: "Udang",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Shrimp2.jpg/640px-Shrimp2.jpg"
-        },
-        {
-          question: "Hewan yang hidup di laut dan berkulit duri disebut...",
-          options: ["Ular", "Bintang laut", "Kura-kura", "Laba-laba"],
-          answer: "Bintang laut",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Starfish_2008-07-01.jpg/640px-Starfish_2008-07-01.jpg"
-        },
-        {
-          question: "Ayam berkembang biak dengan cara...",
-          options: ["Melahirkan", "Bertelur", "Membelah diri", "Berkuncup"],
-          answer: "Bertelur",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Hen_with_chicks.jpg/640px-Hen_with_chicks.jpg"
-        },
-        {
-          question: "Kura-kura termasuk hewan apa?",
-          options: ["Pisces", "Reptil", "Amfibi", "Mamalia"],
-          answer: "Reptil",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Tortoise_and_the_tiger.jpg/640px-Tortoise_and_the_tiger.jpg"
-        }
-      ],
-      hard: [
-        {
-          question: "Hewan apakah yang termasuk invertebrata?",
-          options: ["Kucing", "Siput", "Ayam", "Katak"],
-          answer: "Siput",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Snail1web.jpg/640px-Snail1web.jpg"
-        },
-        {
-          question: "Cumi-cumi bergerak dengan cara...",
-          options: ["Melayang", "Menyelam", "Jet air", "Berjalan"],
-          answer: "Jet air",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Bigfin_Squid.jpg/640px-Bigfin_Squid.jpg"
-        },
-        {
-          question: "Laba-laba termasuk kelompok...",
-          options: ["Serangga", "Arakhnida", "Amfibi", "Reptil"],
-          answer: "Arakhnida",
-          image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Jumping_spider_face.jpg/640px-Jumping_spider_face.jpg"
-        }
-      ]
-    };
+    const questions = [
+      { level: 'easy', question: 'Hewan ini bersuara "guk-guk".', options: ['Kucing', 'Anjing', 'Ayam', 'Sapi'], answer: 'Anjing', media: 'https://upload.wikimedia.org/wikipedia/commons/7/76/Dog_breed_Collage.png', type: 'img' },
+      { level: 'easy', question: 'Hewan yang suka susu?', options: ['Gajah', 'Kucing', 'Kuda', 'Kambing'], answer: 'Kucing', media: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg', type: 'img' },
+      { level: 'easy', question: 'Hewan berkaki 2 yang bertelur?', options: ['Kucing', 'Ayam', 'Kuda', 'Singa'], answer: 'Ayam', media: 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Chicken_in_Taiwan.jpg', type: 'img' },
+      
+      { level: 'medium', question: 'Hewan terbesar di laut?', options: ['Ikan Paus', 'Hiu', 'Kuda Laut', 'Lumba-lumba'], answer: 'Ikan Paus', media: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/Bluewhale_with_calf.jpg', type: 'img' },
+      { level: 'medium', question: 'Hewan ini bisa memutar kepalanya 270 derajat.', options: ['Kucing', 'Burung Hantu', 'Tikus', 'Kuda'], answer: 'Burung Hantu', media: 'https://upload.wikimedia.org/wikipedia/commons/0/0e/Barn_Owl_Tyto_alba.jpg', type: 'img' },
+      { level: 'medium', question: 'Video suara hewan ini sangat nyaring.', options: ['Anjing', 'Ayam', 'Kakatua', 'Sapi'], answer: 'Kakatua', media: 'https://www.w3schools.com/html/mov_bbb.mp4', type: 'video' },
+      { level: 'medium', question: 'Hewan apa yang punya belalai?', options: ['Singa', 'Gajah', 'Macan', 'Rusa'], answer: 'Gajah', media: 'https://upload.wikimedia.org/wikipedia/commons/3/37/African_Bush_Elephant.jpg', type: 'img' },
 
-    let currentLevelIndex = 0;
-    let levels = ["easy", "medium", "hard"];
-    let questions = [];
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let timer;
-    let timeLeft = 0;
+      { level: 'hard', question: 'Hewan apa yang hidup di Antartika dan tidak bisa terbang?', options: ['Penguin', 'Burung Unta', 'Elang', 'Bebek'], answer: 'Penguin', media: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Aptenodytes_forsteri_-Snow_Hill_Island%2C_Antarctica_-adults_and_chick-8.jpg', type: 'img' },
+      { level: 'hard', question: 'Hewan ini bisa bertahan hidup tanpa air selama berminggu-minggu.', options: ['Unta', 'Sapi', 'Domba', 'Kucing'], answer: 'Unta', media: 'https://upload.wikimedia.org/wikipedia/commons/f/f9/Camel-profile.jpg', type: 'img' },
+      { level: 'hard', question: 'Hewan tercepat di darat?', options: ['Kijang', 'Singa', 'Macan Tutul', 'Cheetah'], answer: 'Cheetah', media: 'https://upload.wikimedia.org/wikipedia/commons/7/71/Cheetah4.jpg', type: 'img' },
+    ];
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
+    const timeLimits = { easy: 30, medium: 60, hard: 90 };
+    const bgMusic = document.getElementById("bgMusic");
+    const musicToggle = document.getElementById("musicToggle");
+    let currentQuestion = 0, score = 0, timer, timerInterval;
+    let shuffled = [];
+
+    function shuffleQuestions() {
+      const levels = ['easy', 'medium', 'hard'];
+      levels.forEach(level => {
+        const filtered = questions.filter(q => q.level === level);
+        shuffled.push(...filtered.sort(() => 0.5 - Math.random()));
+      });
     }
 
-    function startGame() {
-      levels.forEach(level => shuffle(allQuestions[level]));
-      loadNextLevel();
-      updateHighScoreDisplay();
-    }
-
-    function loadNextLevel() {
-      if (currentLevelIndex >= levels.length) {
-        showFinalResult();
-        return;
-      }
-      const level = levels[currentLevelIndex];
-      questions = allQuestions[level];
-      currentQuestionIndex = 0;
-      loadQuestion();
-    }
-
-    function loadQuestion() {
-      const q = questions[currentQuestionIndex];
-      document.getElementById("question").textContent = q.question;
-      document.getElementById("animalImage").src = q.image;
-      document.getElementById("result").textContent = "";
-      document.getElementById("nextBtn").style.display = "none";
-      document.getElementById("timer").textContent = "";
-
-      const optionsDiv = document.getElementById("options");
-      optionsDiv.innerHTML = "";
+    function showQuestion() {
+      clearInterval(timerInterval);
+      document.getElementById("result").innerText = "";
+      const q = shuffled[currentQuestion];
+      document.getElementById("questionText").innerText = q.question;
+      const media = q.type === 'img'
+        ? `<img src="${q.media}" alt="gambar">`
+        : `<video controls autoplay muted loop><source src="${q.media}" type="video/mp4"></video>`;
+      document.getElementById("mediaContainer").innerHTML = media;
+      document.getElementById("options").innerHTML = "";
       q.options.forEach(opt => {
         const btn = document.createElement("button");
         btn.textContent = opt;
         btn.onclick = () => checkAnswer(opt);
-        optionsDiv.appendChild(btn);
+        document.getElementById("options").appendChild(btn);
       });
-
-      startTimerForLevel(levels[currentLevelIndex]);
+      startTimer(timeLimits[q.level]);
     }
 
-    function startTimerForLevel(level) {
-      clearInterval(timer);
-      timeLeft = level === "easy" ? 30 : level === "medium" ? 60 : 90;
-      document.getElementById("timer").textContent = `Waktu: ${timeLeft} detik`;
-
-      timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById("timer").textContent = `Waktu: ${timeLeft} detik`;
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          checkAnswer(null); // Timeout
+    function startTimer(duration) {
+      timer = duration;
+      document.getElementById("timer").innerText = `⏱ ${timer} detik`;
+      timerInterval = setInterval(() => {
+        timer--;
+        document.getElementById("timer").innerText = `⏱ ${timer} detik`;
+        if (timer <= 0) {
+          clearInterval(timerInterval);
+          checkAnswer(null);
         }
       }, 1000);
     }
 
     function checkAnswer(selected) {
-      clearInterval(timer);
-      const correct = questions[currentQuestionIndex].answer;
+      clearInterval(timerInterval);
+      const correct = shuffled[currentQuestion].answer;
       const result = document.getElementById("result");
-
-      const audioCorrect = document.getElementById("audioCorrect");
-      const audioWrong = document.getElementById("audioWrong");
-
       if (selected === correct) {
-        result.textContent = "Benar! 🎉";
-        result.style.color = "green";
         score++;
-        audioCorrect.play();
-      } else if (selected === null) {
-        result.textContent = `Waktu habis! Jawaban benar: ${correct}`;
-        result.style.color = "orange";
-        audioWrong.play();
+        result.innerText = "✅ Benar!";
+        new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3').play();
       } else {
-        result.textContent = `Salah. Jawaban benar: ${correct}`;
-        result.style.color = "red";
-        audioWrong.play();
+        result.innerText = `❌ Salah. Jawaban: ${correct}`;
+        new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3').play();
       }
-
-      document.querySelectorAll("#options button").forEach(btn => btn.disabled = true);
-      document.getElementById("nextBtn").style.display = "inline-block";
+      document.getElementById("score").innerText = `Skor: ${score}`;
     }
 
-    function nextQuestion() {
-      currentQuestionIndex++;
-      if (currentQuestionIndex < questions.length) {
-        loadQuestion();
+    document.getElementById("nextBtn").onclick = () => {
+      currentQuestion++;
+      if (currentQuestion < shuffled.length) {
+        showQuestion();
       } else {
-        currentLevelIndex++;
-        loadNextLevel();
+        document.getElementById("questionContainer").style.display = "none";
+        document.getElementById("nextBtn").style.display = "none";
+        document.getElementById("result").innerText = `Permainan selesai! Skor akhir: ${score}`;
+        saveToLeaderboard(score);
+      }
+    };
+
+    musicToggle.onclick = () => {
+      if (bgMusic.paused) {
+        bgMusic.play();
+        musicToggle.textContent = "🔈 Matikan Musik";
+      } else {
+        bgMusic.pause();
+        musicToggle.textContent = "🔊 Musik";
       }
     }
 
-    function showFinalResult() {
-      document.getElementById("question").textContent = "Game Selesai!";
-      document.getElementById("animalImage").style.display = "none";
-      document.getElementById("options").innerHTML = "";
-      document.getElementById("result").textContent = `Skor kamu: ${score} dari 10`;
-      document.getElementById("timer").textContent = "";
-      document.getElementById("restartBtn").style.display = "inline-block";
-
-      const high = localStorage.getItem("highScore") || 0;
-      if (score > high) {
-        localStorage.setItem("highScore", score);
-        updateHighScoreDisplay();
-      }
+    function saveToLeaderboard(finalScore) {
+      const name = prompt("Masukkan nama Anda untuk leaderboard:") || "Anonim";
+      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec", {
+        method: "POST",
+        body: JSON.stringify({ name, score: finalScore })
+      });
     }
 
-    function updateHighScoreDisplay() {
-      const high = localStorage.getItem("highScore") || 0;
-      document.getElementById("highscore").textContent = `Skor tertinggi: ${high}`;
+    function loadLeaderboard() {
+      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec")
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("leaderboard");
+          list.innerHTML = "";
+          data.forEach(entry => {
+            const li = document.createElement("li");
+            li.textContent = `${entry.name}: ${entry.score}`;
+            list.appendChild(li);
+          });
+        });
     }
 
-    function restartGame() {
-      score = 0;
-      currentLevelIndex = 0;
-      document.getElementById("animalImage").style.display = "block";
-      document.getElementById("restartBtn").style.display = "none";
-      startGame();
-    }
-
-    // Mulai game pertama kali
-    startGame();
+    shuffleQuestions();
+    showQuestion();
+    loadLeaderboard();
   </script>
 </body>
 </html>
